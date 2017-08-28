@@ -189,6 +189,7 @@
       
       viewController.tabBarItem.imageInsets = UIEdgeInsetsMake(top, left, bottom, right);
     }
+    
     NSMutableDictionary *unselectedAttributes = [RCTHelpers textAttributesFromDictionary:tabsStyle withPrefix:@"tabBarText" baseFont:[UIFont systemFontOfSize:10]];
     if (!unselectedAttributes[NSForegroundColorAttributeName] && labelColor) {
       unselectedAttributes[NSForegroundColorAttributeName] = labelColor;
@@ -227,8 +228,50 @@
   }
   
   [self setRotation:props];
+
+  // setup special tab
+  int tabIndex = 0;
+  for (NSDictionary *tabItemLayout in children)
+  {
+    id specialTab = tabItemLayout[@"props"][@"specialTab"];
+    if (specialTab){
+      id specialTabIcon = tabItemLayout[@"props"][@"icon"];
+      id iconColor = tabItemLayout[@"props"][@"iconColor"];
+      UIColor *specialTabIconColor = iconColor != (id)[NSNull null] ? [RCTConvert UIColor:iconColor] : nil;
+      id backgroundColor = tabItemLayout[@"props"][@"backgroundColor"];
+      UIColor *specialTabBackgroundColor = backgroundColor != (id)[NSNull null] ? [RCTConvert UIColor:backgroundColor] : nil;
+      if (specialTabIcon){
+        [self setupSpecialTab:[[self image:[RCTConvert UIImage:specialTabIcon] withColor:specialTabIconColor] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] background:specialTabBackgroundColor atIndex:tabIndex];
+      }
+    }
+    tabIndex++;
+  }
   
   return self;
+}
+
+-(void)setupSpecialTab:(UIImage*)icon background:(UIColor*)backgroundColor atIndex:(int)tabIndex{
+  UIButton *menuButton = [[UIButton alloc] initWithFrame:CGRectMake(0, 0, 64, 64)];
+  menuButton.backgroundColor = backgroundColor;
+  CGRect menuButtonFrame = menuButton.frame;
+  menuButton.tag = tabIndex;
+  menuButtonFrame.origin.x = self.view.bounds.size.width / self.tabBar.items.count * tabIndex;
+  menuButtonFrame.size.height = self.tabBar.frame.size.height;
+  menuButtonFrame.size.width = self.view.bounds.size.width / self.tabBar.items.count;
+  menuButton.frame = menuButtonFrame;
+  [self.tabBar addSubview:menuButton];
+  [menuButton setImage:icon forState:UIControlStateNormal];
+  [menuButton addTarget:self action:@selector(specialTabTapped:) forControlEvents:UIControlEventTouchUpInside];
+  [self.view layoutIfNeeded];
+}
+
+-(void)specialTabTapped:(UIButton*)button{
+  long tabIndex = button.tag;
+  if (tabIndex >= 0 && tabIndex < self.tabBar.items.count){
+    self.selectedIndex = tabIndex;
+    UIViewController *selectedCtrl = [self.viewControllers objectAtIndex:self.selectedIndex];
+    [self tabBarController:self shouldSelectViewController:selectedCtrl];
+  }
 }
 
 - (void)performAction:(NSString*)performAction actionParams:(NSDictionary*)actionParams bridge:(RCTBridge *)bridge completion:(void (^)(void))completion
