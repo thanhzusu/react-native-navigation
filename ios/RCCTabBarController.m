@@ -235,10 +235,10 @@
   {
     id specialTab = tabItemLayout[@"props"][@"specialTab"];
     if (specialTab){
-      id specialTabIcon = tabItemLayout[@"props"][@"icon"];
-      id iconColor = tabItemLayout[@"props"][@"iconColor"];
+      id specialTabIcon = specialTab[@"icon"];
+      id iconColor = specialTab[@"iconColor"];
       UIColor *specialTabIconColor = iconColor != (id)[NSNull null] ? [RCTConvert UIColor:iconColor] : nil;
-      id backgroundColor = tabItemLayout[@"props"][@"backgroundColor"];
+      id backgroundColor = specialTab[@"backgroundColor"];
       UIColor *specialTabBackgroundColor = backgroundColor != (id)[NSNull null] ? [RCTConvert UIColor:backgroundColor] : nil;
       if (specialTabIcon){
         [self setupSpecialTab:[[self image:[RCTConvert UIImage:specialTabIcon] withColor:specialTabIconColor] imageWithRenderingMode:UIImageRenderingModeAlwaysOriginal] background:specialTabBackgroundColor atIndex:tabIndex];
