@@ -266,25 +266,29 @@
 }
 
 -(void)specialTabTapped:(UIButton*)button{
-    UIViewController *viewController = [self.viewControllers objectAtIndex:self.selectedIndex];
-    if ([viewController isKindOfClass:[UINavigationController class]]) {
-        UINavigationController *navigationController = (UINavigationController*)viewController;
-        viewController = [navigationController topViewController];
-    }
-    if ([viewController.view isKindOfClass:[RCTRootView class]]){
-        RCTRootView *rootView = (RCTRootView *)viewController.view;
-        NSString *event = @"bottomBarCreateProductSelected";
-        if (rootView.appProperties && rootView.appProperties[@"navigatorEventID"]) {
-            NSString *navigatorID = rootView.appProperties[@"navigatorID"];
-            NSString *screenInstanceID = rootView.appProperties[@"screenInstanceID"];
-            
-            NSMutableDictionary *screenDict = [NSMutableDictionary dictionaryWithDictionary:@
-                                               {
-                                                   @"id": event,
-                                                   @"navigatorID": navigatorID,
-                                                   @"screenInstanceID": screenInstanceID
-                                               }];
-            [[[RCCManager sharedInstance] getBridge].eventDispatcher sendAppEventWithName:rootView.appProperties[@"navigatorEventID"] body:screenDict];
+    long tabIndex = button.tag;
+    if (tabIndex >= 0 && tabIndex < self.tabBar.items.count){
+        UIViewController *viewController = [self.viewControllers objectAtIndex:self.selectedIndex];
+        if ([viewController isKindOfClass:[UINavigationController class]]) {
+            UINavigationController *navigationController = (UINavigationController*)viewController;
+            viewController = [navigationController topViewController];
+        }
+        if ([viewController.view isKindOfClass:[RCTRootView class]]){
+            RCTRootView *rootView = (RCTRootView *)viewController.view;
+            NSString *event = @"specialTabSelected";
+            if (rootView.appProperties && rootView.appProperties[@"navigatorEventID"]) {
+                NSString *navigatorID = rootView.appProperties[@"navigatorID"];
+                NSString *screenInstanceID = rootView.appProperties[@"screenInstanceID"];
+                
+                NSMutableDictionary *screenDict = [NSMutableDictionary dictionaryWithDictionary:@
+                                                   {
+                                                       @"id": event,
+                                                       @"tabIndex": [NSNumber numberWithLong:tabIndex],
+                                                       @"navigatorID": navigatorID,
+                                                       @"screenInstanceID": screenInstanceID
+                                                   }];
+                [[[RCCManager sharedInstance] getBridge].eventDispatcher sendAppEventWithName:rootView.appProperties[@"navigatorEventID"] body:screenDict];
+            }
         }
     }
 }
