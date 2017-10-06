@@ -266,12 +266,27 @@
 }
 
 -(void)specialTabTapped:(UIButton*)button{
-  long tabIndex = button.tag;
-  if (tabIndex >= 0 && tabIndex < self.tabBar.items.count){
-    self.selectedIndex = tabIndex;
-    UIViewController *selectedCtrl = [self.viewControllers objectAtIndex:self.selectedIndex];
-    [self tabBarController:self shouldSelectViewController:selectedCtrl];
-  }
+    UIViewController *viewController = [self.viewControllers objectAtIndex:self.selectedIndex];
+    if ([viewController isKindOfClass:[UINavigationController class]]) {
+        UINavigationController *navigationController = (UINavigationController*)viewController;
+        viewController = [navigationController topViewController];
+    }
+    if ([viewController.view isKindOfClass:[RCTRootView class]]){
+        RCTRootView *rootView = (RCTRootView *)viewController.view;
+        NSString *event = @"bottomBarCreateProductSelected";
+        if (rootView.appProperties && rootView.appProperties[@"navigatorEventID"]) {
+            NSString *navigatorID = rootView.appProperties[@"navigatorID"];
+            NSString *screenInstanceID = rootView.appProperties[@"screenInstanceID"];
+            
+            NSMutableDictionary *screenDict = [NSMutableDictionary dictionaryWithDictionary:@
+                                               {
+                                                   @"id": event,
+                                                   @"navigatorID": navigatorID,
+                                                   @"screenInstanceID": screenInstanceID
+                                               }];
+            [[[RCCManager sharedInstance] getBridge].eventDispatcher sendAppEventWithName:rootView.appProperties[@"navigatorEventID"] body:screenDict];
+        }
+    }
 }
 
 - (void)performAction:(NSString*)performAction actionParams:(NSDictionary*)actionParams bridge:(RCTBridge *)bridge completion:(void (^)(void))completion
