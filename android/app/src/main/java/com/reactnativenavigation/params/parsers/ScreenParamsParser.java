@@ -58,6 +58,8 @@ public class ScreenParamsParser extends Parser {
 
         result.animationType = params.getString(ANIMATION_TYPE, AppStyle.appStyle.screenAnimationType);
 
+        result.rawParams = params;
+
         return result;
     }
 

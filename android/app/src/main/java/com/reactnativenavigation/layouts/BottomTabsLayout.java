@@ -1,13 +1,20 @@
 package com.reactnativenavigation.layouts;
 
 import android.annotation.SuppressLint;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.graphics.drawable.DrawableCompat;
+import android.support.v4.view.ViewCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.aurelhubert.ahbottomnavigation.AHBottomNavigation;
@@ -30,6 +37,7 @@ import com.reactnativenavigation.params.SnackbarParams;
 import com.reactnativenavigation.params.StyleParams;
 import com.reactnativenavigation.params.TitleBarButtonParams;
 import com.reactnativenavigation.params.TitleBarLeftButtonParams;
+import com.reactnativenavigation.react.ImageLoader;
 import com.reactnativenavigation.screens.NavigationType;
 import com.reactnativenavigation.screens.Screen;
 import com.reactnativenavigation.screens.ScreenStack;
@@ -63,6 +71,9 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
     SideMenu sideMenu;
     private int currentStackIndex = 0;
     private LightBox lightBox;
+    private ImageButton specialTabButton;
+    int specialTabIndex;
+    final private int SPECIAL_TAB_BUTTON_ID = (int)System.currentTimeMillis();
 
     public BottomTabsLayout(AppCompatActivity activity, ActivityParams params) {
         super(activity);
@@ -77,6 +88,7 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
         createSideMenu();
         createBottomTabs();
         addBottomTabs();
+        createSpecialTabs();
         addScreenStacks();
         createSnackbarContainer();
         showInitialScreenStack();
@@ -132,6 +144,127 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
         lp.addRule(ALIGN_PARENT_BOTTOM);
         getScreenStackParent().addView(bottomTabs, lp);
     }
+
+    /* -- Start Adding Special Tab -- */
+    private void createSpecialTabs(){
+        if (params.tabParams != null){
+            if (specialTabButton != null){
+                getScreenStackParent().removeView(specialTabButton);
+            }
+            String specialTabKey = "specialTab";
+            String specialTabIconKey = "icon";
+            String specialTabIconColorKey = "iconColor";
+            String specialTabBackgroundColorKey = "backgroundColor";
+            final String specialTabSelectedEvent = "specialTabSelected";
+            final String tabIndex = "tabIndex";
+            for (int i = 0; i < params.tabParams.size(); i++){
+                ScreenParams param = params.tabParams.get(i);
+                if (param.rawParams != null && hasKey(param.rawParams, specialTabKey)){
+                    Bundle specialTabParams = param.rawParams.getBundle(specialTabKey);
+                    Drawable tabIcon = parseIcon(specialTabParams, specialTabIconKey);
+                    StyleParams.Color tabIconColor = getColor(specialTabParams, specialTabIconColorKey, AppStyle.appStyle.titleBarButtonColor);
+                    StyleParams.Color tabBackgroundColor = getColor(specialTabParams, specialTabBackgroundColorKey, AppStyle.appStyle.titleBarButtonColor);
+                    FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(100, 44);
+                    DrawableCompat.setTint(tabIcon, tabIconColor.getColor());
+                    specialTabButton = new ImageButton(getContext());
+                    specialTabButton.setId(SPECIAL_TAB_BUTTON_ID);
+                    specialTabButton.setScaleType(ImageView.ScaleType.CENTER);
+                    specialTabButton.setImageDrawable(tabIcon);
+                    specialTabButton.setBackgroundColor(tabBackgroundColor.getColor());
+                    specialTabIndex = i;
+                    specialTabButton.setOnClickListener(new OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            String navigatorEventId = getCurrentScreenStack().peek().getNavigatorEventId();
+                            WritableMap data = Arguments.createMap();
+                            data.putInt(tabIndex, specialTabIndex);
+                            NavigationApplication.instance.getEventEmitter().sendNavigatorEvent(specialTabSelectedEvent, navigatorEventId, data);
+                        }
+                    });
+                    if (bottomTabs != null){
+                        bottomTabs.addView(specialTabButton, lp);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+        if (specialTabButton != null){
+            int width = 100;
+            int height = 44;
+            int leftMargin = 0;
+            int topMargin = 0;
+            if (bottomTabs != null){
+                height = bottomTabs.getHeight();
+                if (params != null && params.tabParams != null && params.tabParams.size() > 0){
+                    width = bottomTabs.getWidth() / params.tabParams.size();
+                    leftMargin = width * specialTabIndex;
+                }
+            }
+            FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) specialTabButton.getLayoutParams();
+            if (layoutParams == null){
+                layoutParams = new FrameLayout.LayoutParams(width, height);
+            }
+            layoutParams.width = width;
+            layoutParams.height = height;
+            layoutParams.leftMargin = leftMargin;
+            layoutParams.topMargin = topMargin;
+            if (bottomTabs != null && bottomTabs.findViewById(SPECIAL_TAB_BUTTON_ID) != specialTabButton){
+                bottomTabs.addView(specialTabButton, layoutParams);
+            }
+            specialTabButton.setLayoutParams(layoutParams);
+            specialTabButton.invalidate();
+            bringViewToFront(specialTabButton);
+        }
+    }
+
+    @Override
+    protected void onAttachedToWindow() {
+        super.onAttachedToWindow();
+        bringViewToFront(specialTabButton);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        bringViewToFront(specialTabButton);
+    }
+
+    public static void bringViewToFront(View view){
+        if (view != null) {
+            ViewCompat.setZ(view, 1000);
+        }
+    }
+
+    public static StyleParams.Color getColor(Bundle bundle, String key, StyleParams.Color defaultColor) {
+        StyleParams.Color color = StyleParams.Color.parse(bundle, key);
+        return color.hasColor() || defaultColor == null ? color : defaultColor;
+    }
+
+    public static boolean hasKey(Bundle bundle, String key) {
+        return bundle.keySet().contains(key);
+    }
+
+    public static Drawable parseIcon(Bundle bundle, String iconKey) {
+        Drawable icon = null;
+        if (hasKey(bundle, iconKey)) {
+            if (bundle.get(iconKey) instanceof String) {
+                icon = ImageLoader.loadImage(bundle.getString(iconKey));
+            } else if (bundle.get(iconKey) instanceof Bundle) {
+                String uriKey = "uri";
+                Bundle iconBundle = bundle.getBundle(iconKey);
+                if (iconBundle.get(uriKey) instanceof String) {
+                    icon = ImageLoader.loadImage(iconBundle.getString(uriKey));
+                }
+            }
+        }
+        return icon;
+    }
+    /* -- End Adding Special Tab -- */
 
     private void createSnackbarContainer() {
         snackbarAndFabContainer = new SnackbarAndFabContainer(getContext(), this);
