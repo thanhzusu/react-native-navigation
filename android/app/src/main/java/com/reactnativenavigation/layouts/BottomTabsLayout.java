@@ -215,10 +215,10 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
             layoutParams.topMargin = topMargin;
             if (bottomTabs != null && bottomTabs.findViewById(SPECIAL_TAB_BUTTON_ID) != specialTabButton){
                 bottomTabs.addView(specialTabButton, layoutParams);
+                specialTabButton.setLayoutParams(layoutParams);
+                specialTabButton.invalidate();
+                bringViewToFront(specialTabButton);
             }
-            specialTabButton.setLayoutParams(layoutParams);
-            specialTabButton.invalidate();
-            bringViewToFront(specialTabButton);
         }
     }
 
