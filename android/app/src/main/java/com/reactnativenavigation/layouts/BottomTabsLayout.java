@@ -73,7 +73,7 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
     private LightBox lightBox;
     private ImageButton specialTabButton;
     int specialTabIndex;
-    final private int SPECIAL_TAB_BUTTON_ID = (int)System.currentTimeMillis();
+    final private int SPECIAL_TAB_BUTTON_ID = 65851113;
 
     public BottomTabsLayout(AppCompatActivity activity, ActivityParams params) {
         super(activity);
@@ -214,6 +214,9 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
             layoutParams.leftMargin = leftMargin;
             layoutParams.topMargin = topMargin;
             if (bottomTabs != null && bottomTabs.findViewById(SPECIAL_TAB_BUTTON_ID) != specialTabButton){
+                if (specialTabButton.getParent() == bottomTabs){
+                    bottomTabs.removeView(specialTabButton);
+                }
                 bottomTabs.addView(specialTabButton, layoutParams);
                 specialTabButton.setLayoutParams(layoutParams);
                 specialTabButton.invalidate();
