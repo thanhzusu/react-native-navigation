@@ -193,17 +193,15 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         super.onLayout(changed, l, t, r, b);
-        if (specialTabButton != null){
+        if (specialTabButton != null && bottomTabs != null && bottomTabs.findViewById(SPECIAL_TAB_BUTTON_ID) != specialTabButton){
             int width = 100;
             int height = 44;
             int leftMargin = 0;
             int topMargin = 0;
-            if (bottomTabs != null){
-                height = bottomTabs.getHeight();
-                if (params != null && params.tabParams != null && params.tabParams.size() > 0){
-                    width = bottomTabs.getWidth() / params.tabParams.size();
-                    leftMargin = width * specialTabIndex;
-                }
+            height = bottomTabs.getHeight();
+            if (params != null && params.tabParams != null && params.tabParams.size() > 0){
+                width = bottomTabs.getWidth() / params.tabParams.size();
+                leftMargin = width * specialTabIndex;
             }
             FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) specialTabButton.getLayoutParams();
             if (layoutParams == null){
@@ -213,15 +211,13 @@ public class BottomTabsLayout extends BaseLayout implements AHBottomNavigation.O
             layoutParams.height = height;
             layoutParams.leftMargin = leftMargin;
             layoutParams.topMargin = topMargin;
-            if (bottomTabs != null && bottomTabs.findViewById(SPECIAL_TAB_BUTTON_ID) != specialTabButton){
-                if (specialTabButton.getParent() == bottomTabs){
-                    bottomTabs.removeView(specialTabButton);
-                }
-                bottomTabs.addView(specialTabButton, layoutParams);
-                specialTabButton.setLayoutParams(layoutParams);
-                specialTabButton.invalidate();
-                bringViewToFront(specialTabButton);
+            if (specialTabButton.getParent() == bottomTabs){
+                bottomTabs.removeView(specialTabButton);
             }
+            bottomTabs.addView(specialTabButton, layoutParams);
+            specialTabButton.setLayoutParams(layoutParams);
+            specialTabButton.invalidate();
+            bringViewToFront(specialTabButton);
         }
     }
 
