@@ -2,6 +2,7 @@ package com.reactnativenavigation.params;
 
 import android.os.Bundle;
 
+import java.util.Collections;
 import java.util.List;
 
 public class ScreenParams extends BaseScreenParams {
@@ -9,6 +10,7 @@ public class ScreenParams extends BaseScreenParams {
     public List<PageParams> topTabParams;
     public List<String> sharedElementsTransitions;
     public Bundle rawParams;
+    public List<ScreenParams> screens = Collections.EMPTY_LIST; // used to init a stack with multiple screens
 
     public boolean hasTopTabs() {
         return topTabParams != null && !topTabParams.isEmpty();
