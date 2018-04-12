@@ -20,7 +20,8 @@ async function startSingleScreenApp(params) {
   if (components) {
     params.screen = createSingleScreen(components[0]);
     components.shift();
-    params.screen.screens = components.map(createSingleScreen);
+    params.screen.screens = components.map(createSingleScreen) || [];
+    params.screen.screens.map((c, i) => i === 0 ? c : addTitleBarBackButtonIfNeeded(c));
   } else {
     params.screen = createSingleScreen({...params.screen, passProps: params.passProps});
   }
@@ -223,6 +224,7 @@ function convertStyleParams(originalStyleObject) {
     bottomTabsSelectedButtonColor: processColor(originalStyleObject.tabBarSelectedButtonColor),
     bottomTabsHidden: originalStyleObject.tabBarHidden,
     bottomTabsHiddenOnScroll: originalStyleObject.bottomTabsHiddenOnScroll,
+    bottomTabsHideShadow: originalStyleObject.tabBarHideShadow,
     forceTitlesDisplay: originalStyleObject.forceTitlesDisplay,
     bottomTabBadgeTextColor: processColor(originalStyleObject.bottomTabBadgeTextColor),
     bottomTabBadgeBackgroundColor: processColor(originalStyleObject.bottomTabBadgeBackgroundColor),
@@ -314,10 +316,12 @@ async function startTabBasedApp(params) {
   params.tabs.forEach(function(tab, idx) {
     if (tab.components) {
       const components = tab.components;
-      const screen = createBottomTabScreen(components[0], idx, params)
-      const {label, icon} = components[0];
-      components.shift();
+      const screen = createBottomTabScreen(tab, idx, params)
+      const {label, icon} = screen;
       screen.screens = components.map(c => createBottomTabScreen({...c, icon, label}, idx, params));
+      screen.screens.map((s, i) => addTitleBarBackButtonIfNeeded(s));
+      screen.screens.map((s, i) => s.navigationParams.navigatorID = screen.navigationParams.navigatorID);
+      screen = _.omit(screen, ['components']);
       newTabs.push(screen);
     } else {
       newTabs.push(createBottomTabScreen(tab, idx, params));
@@ -556,8 +560,8 @@ function dismissModal(params) {
   });
 }
 
-function dismissAllModals(params) {
-  newPlatformSpecific.dismissAllModals();
+async function dismissAllModals(params) {
+  return await newPlatformSpecific.dismissAllModals();
 }
 
 function showInAppNotification(params) {
